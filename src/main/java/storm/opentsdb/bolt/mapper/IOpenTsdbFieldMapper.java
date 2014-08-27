@@ -1,11 +1,11 @@
-package net.ovh.storm.opentsdb.bolt.mapper;
+package storm.opentsdb.bolt.mapper;
 
 import backtype.storm.tuple.Tuple;
 
 import java.io.Serializable;
 import java.util.Map;
 
-public interface OpenTsdbFieldMapper extends Serializable {
+public interface IOpenTsdbFieldMapper extends Serializable {
     public String getMetric(Tuple tuple);
 
     public long getTimestamp(Tuple tuple);
@@ -13,4 +13,13 @@ public interface OpenTsdbFieldMapper extends Serializable {
     public double getValue(Tuple tuple);
 
     public Map<String, String> getTags(Tuple tuple);
+
+    /**
+     * <p>
+     * Initialize the mapper.
+     * </p>
+     *
+     * @param conf Topology configuration.
+     */
+    void prepare(Map conf);
 }

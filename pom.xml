@@ -27,6 +27,13 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- STORM ASYNCHBASE -->
+        <dependency>
+            <groupId>storm</groupId>
+            <artifactId>storm-asynchbase</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
         <!-- ASYNC HBASE -->
         <dependency>
             <groupId>org.hbase</groupId>

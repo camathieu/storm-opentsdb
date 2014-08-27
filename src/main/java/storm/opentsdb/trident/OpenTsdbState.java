@@ -1,9 +1,9 @@
-package net.ovh.storm.opentsdb.trident;
+package storm.opentsdb.trident;
 
 import com.stumbleupon.async.Deferred;
 import net.opentsdb.core.TSDB;
-import net.ovh.storm.opentsdb.trident.mapper.OpenTsdbTridentFieldMapper;
-import net.ovh.storm.opentsdb.trident.mapper.OpenTsdbTridentMapper;
+import storm.opentsdb.trident.mapper.IOpenTsdbTridentFieldMapper;
+import storm.opentsdb.trident.mapper.OpenTsdbTridentMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import storm.trident.state.State;
@@ -11,14 +11,13 @@ import storm.trident.tuple.TridentTuple;
 
 import java.util.ArrayList;
 
-public class OpenTsdbValueState implements State {
-    public static final Logger log = LoggerFactory.getLogger(OpenTsdbValueState.class);
+public class OpenTsdbState implements State {
+    public static final Logger log = LoggerFactory.getLogger(OpenTsdbState.class);
 
     private final TSDB tsdb;
     private final OpenTsdbTridentMapper mapper;
-    private boolean failFast = false;
 
-    public OpenTsdbValueState(TSDB tsdb, OpenTsdbTridentMapper mapper) {
+    public OpenTsdbState(TSDB tsdb, OpenTsdbTridentMapper mapper) {
         this.tsdb = tsdb;
         this.mapper = mapper;
     }
@@ -26,7 +25,7 @@ public class OpenTsdbValueState implements State {
     public Deferred<ArrayList<Object>> put(final TridentTuple tuple) {
         ArrayList<Deferred<Object>> results = new ArrayList<>();
 
-        for (OpenTsdbTridentFieldMapper fieldMapper : mapper.getFieldMappers()) {
+        for (IOpenTsdbTridentFieldMapper fieldMapper : mapper.getFieldMappers()) {
             double value = fieldMapper.getValue(tuple);
             if (value == (long) value) {
                 try {
@@ -54,15 +53,6 @@ public class OpenTsdbValueState implements State {
         }
 
         return Deferred.group(results);
-    }
-
-    public boolean isFailFast() {
-        return this.failFast;
-    }
-
-    public OpenTsdbValueState setFailFast(boolean failFast) {
-        this.failFast = failFast;
-        return this;
     }
 
     @Override

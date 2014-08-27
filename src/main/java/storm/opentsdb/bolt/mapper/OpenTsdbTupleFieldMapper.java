@@ -1,44 +1,45 @@
-package net.ovh.storm.opentsdb.trident.mapper;
+package storm.opentsdb.bolt.mapper;
 
-import storm.trident.tuple.TridentTuple;
+import backtype.storm.tuple.Tuple;
+import storm.asynchbase.utils.serializer.AsyncHBaseSerializer;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class OpenTsdbTridentFieldSet implements OpenTsdbTridentFieldMapper {
-    private String metricField;
-    private String timestampField;
-    private String valueField;
-    private String tagsField;
+public class OpenTsdbTupleFieldMapper implements IOpenTsdbFieldMapper {
+    private final String metricField;
+    private final String timestampField;
+    private final String valueField;
+    private final String tagsField;
 
     private List<String> validTags;
 
-    public OpenTsdbTridentFieldSet(String metricField, String timestampField, String valueField, String tagsField) {
+    public OpenTsdbTupleFieldMapper(String metricField, String timestampField, String valueField, String tagsField) {
         this.metricField = metricField;
         this.timestampField = timestampField;
         this.valueField = valueField;
         this.tagsField = tagsField;
     }
 
-    public OpenTsdbTridentFieldSet setValidTags(List<String> validTags) {
+    public OpenTsdbTupleFieldMapper setValidTags(List<String> validTags) {
         this.validTags = validTags;
         return this;
     }
 
-    public String getMetric(TridentTuple tuple) {
+    public String getMetric(Tuple tuple) {
         return tuple.getStringByField(this.metricField);
     }
 
-    public long getTimestamp(TridentTuple tuple) {
+    public long getTimestamp(Tuple tuple) {
         return tuple.getLongByField(this.timestampField);
     }
 
-    public double getValue(TridentTuple tuple) {
+    public double getValue(Tuple tuple) {
         return tuple.getDoubleByField(this.valueField);
     }
 
-    public Map<String, String> getTags(TridentTuple tuple) {
+    public Map<String, String> getTags(Tuple tuple) {
         if (this.validTags == null) {
             return (Map<String, String>) tuple.getValueByField(this.tagsField);
         }
@@ -59,5 +60,10 @@ public class OpenTsdbTridentFieldSet implements OpenTsdbTridentFieldMapper {
         }
 
         return tags;
+    }
+
+    @Override
+    public void prepare(Map conf) {
+
     }
 }

@@ -1,4 +1,4 @@
-package net.ovh.storm.opentsdb.trident;
+package storm.opentsdb.trident;
 
 import com.stumbleupon.async.Callback;
 import org.slf4j.Logger;
@@ -10,11 +10,11 @@ import storm.trident.tuple.TridentTuple;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OpenTsdbValueUpdater extends BaseStateUpdater<OpenTsdbValueState> {
-    public static final Logger log = LoggerFactory.getLogger(OpenTsdbValueUpdater.class);
+public class OpenTsdbStateUpdater extends BaseStateUpdater<OpenTsdbState> {
+    public static final Logger log = LoggerFactory.getLogger(storm.opentsdb.trident.OpenTsdbStateUpdater.class);
 
     @Override
-    public void updateState(OpenTsdbValueState state, List<TridentTuple> tuples,
+    public void updateState(OpenTsdbState state, List<TridentTuple> tuples,
                             final TridentCollector collector) {
         for (final TridentTuple tuple : tuples) {
             state.put(tuple).addCallbacks(new Callback<Object, ArrayList<Object>>() {

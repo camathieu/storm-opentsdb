@@ -1,21 +1,21 @@
-package net.ovh.storm.opentsdb.bolt.mapper;
+package storm.opentsdb.bolt.mapper;
 
 import backtype.storm.tuple.Tuple;
-import net.ovh.storm.opentsdb.model.IOpenTsdbEvent;
+import storm.opentsdb.model.IOpenTsdbEvent;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class OpenTsdbEventField implements OpenTsdbFieldMapper {
+public class OpenTsdbEventFieldMapper implements IOpenTsdbFieldMapper {
     private String eventField;
     private List<String> validTags;
 
-    public OpenTsdbEventField(String eventField) {
+    public OpenTsdbEventFieldMapper(String eventField) {
         this.eventField = eventField;
     }
 
-    public OpenTsdbEventField setValidTags(List<String> validTags) {
+    public OpenTsdbEventFieldMapper setValidTags(List<String> validTags) {
         this.validTags = validTags;
         return this;
     }
@@ -58,5 +58,10 @@ public class OpenTsdbEventField implements OpenTsdbFieldMapper {
         }
 
         return tags;
+    }
+
+    @Override
+    public void prepare(Map conf) {
+
     }
 }

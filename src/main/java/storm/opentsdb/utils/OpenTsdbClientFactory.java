@@ -1,10 +1,12 @@
-package net.ovh.storm.opentsdb.utils;
+package storm.opentsdb.utils;
 
 import net.opentsdb.core.TSDB;
 import net.opentsdb.utils.Config;
-import net.ovh.storm.asynchbase.utils.AsyncHBaseClientFactory;
+import org.hbase.async.HBaseClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import storm.asynchbase.utils.AsyncHBaseClientFactory;
 
 import java.io.IOException;
 import java.io.Serializable;

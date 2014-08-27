@@ -1,15 +1,22 @@
-package net.ovh.storm.opentsdb.model;
+package storm.opentsdb.model;
 
 import java.util.Map;
 
 public class OpenTsdbEvent implements IOpenTsdbEvent {
+    public String metric;
     public long timestamp;
-    public String key;
     public double value;
     public Map<String, String> tags;
 
+    public OpenTsdbEvent(String metric, long timestamp, double value, Map<String, String> tags) {
+        this.metric = metric;
+        this.timestamp = timestamp;
+        this.value = value;
+        this.tags = tags;
+    }
+
     public String getMetric() {
-        return this.key;
+        return this.metric;
     }
 
     public long getTimestamp() {
@@ -26,7 +33,7 @@ public class OpenTsdbEvent implements IOpenTsdbEvent {
 
     @Override
     public String toString() {
-        return this.timestamp + " " + this.key + " " +
+        return this.timestamp + " " + this.metric + " " +
             this.value + " " + this.tags.toString();
     }
 }

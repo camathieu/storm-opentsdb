@@ -1,4 +1,4 @@
-package net.ovh.storm.opentsdb.model;
+package storm.opentsdb.model;
 
 import java.util.Map;
 

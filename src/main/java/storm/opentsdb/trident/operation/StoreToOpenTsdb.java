@@ -1,57 +1,61 @@
-package storm.opentsdb.bolt;
+/*
+ * Charles-Antoine Mathieu <charles-antoine.mathieu@ovh.net>
+ */
 
-import backtype.storm.task.OutputCollector;
-import backtype.storm.task.TopologyContext;
-import backtype.storm.topology.IRichBolt;
-import backtype.storm.topology.OutputFieldsDeclarer;
-import backtype.storm.tuple.Tuple;
+package storm.opentsdb.trident.operation;
+
+import backtype.storm.topology.FailedException;
 import com.stumbleupon.async.Callback;
 import com.stumbleupon.async.Deferred;
 import net.opentsdb.core.TSDB;
 import org.hbase.async.PleaseThrottleException;
-import storm.opentsdb.bolt.mapper.IOpenTsdbFieldMapper;
-import storm.opentsdb.bolt.mapper.IOpenTsdbMapper;
-import storm.opentsdb.bolt.mapper.OpenTsdbTupleFieldMapper;
-import storm.opentsdb.bolt.mapper.OpenTsdbMapper;
-import storm.opentsdb.utils.OpenTsdbClientFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import storm.opentsdb.trident.mapper.IOpenTsdbTridentFieldMapper;
+import storm.opentsdb.trident.mapper.IOpenTsdbTridentMapper;
+import storm.opentsdb.trident.mapper.OpenTsdbTridentMapper;
+import storm.opentsdb.trident.mapper.OpenTsdbTridentTupleFieldMapper;
+import storm.opentsdb.utils.OpenTsdbClientFactory;
+import storm.trident.operation.BaseFunction;
+import storm.trident.operation.TridentCollector;
+import storm.trident.operation.TridentOperationContext;
+import storm.trident.tuple.TridentTuple;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class OpenTsdbBolt implements IRichBolt {
-    public static final Logger log = LoggerFactory.getLogger(OpenTsdbBolt.class);
+public class StoreToOpenTsdb extends BaseFunction{
+    public static final Logger log = LoggerFactory.getLogger(StoreToOpenTsdb.class);
+
     private final String cluster;
     private final String name;
-    private final IOpenTsdbMapper mapper;
+    private final IOpenTsdbTridentMapper mapper;
+    public FailStrategy failStrategy = FailStrategy.LOG;
     Callback<ArrayList<Object>, ArrayList<Object>> successCallback;
     Callback<Object, Exception> errorCallback;
-    private Errback errback;
-    private OutputCollector collector;
     private TSDB tsdb;
     private boolean async = true;
     private long timeout = 0;
     private volatile boolean throttle = false;
 
-    public OpenTsdbBolt(String cluster, String name, IOpenTsdbMapper mapper) {
+    public StoreToOpenTsdb(String cluster, String name, IOpenTsdbTridentMapper mapper) {
         this.cluster = cluster;
         this.name = name;
         this.mapper = mapper;
     }
 
-    public OpenTsdbBolt(String cluster, String name) {
+    public StoreToOpenTsdb(String cluster, String name) {
         this(cluster, name,
-            new OpenTsdbMapper()
-                .addFieldMapper(new OpenTsdbTupleFieldMapper("metric", "timestamp", "value", "tags")));
+            new OpenTsdbTridentMapper()
+                .addFieldMapper(new OpenTsdbTridentTupleFieldMapper("metric", "timestamp", "value", "tags")));
     }
 
     /**
      * @param callback Add a success callback between RPC return and tuple ack/emit.
      * @return This so you can do method chaining.
      */
-    public OpenTsdbBolt addCallback(Callback<ArrayList<Object>, ArrayList<Object>> callback) {
+    public StoreToOpenTsdb addCallback(Callback<ArrayList<Object>, ArrayList<Object>> callback) {
         this.successCallback = callback;
         return this;
     }
@@ -60,7 +64,7 @@ public class OpenTsdbBolt implements IRichBolt {
      * @param errback Add an error callback between RPC return and tuple failure.
      * @return This so you can do method chaining.
      */
-    public OpenTsdbBolt addErrback(Callback<Object, Exception> errback) {
+    public StoreToOpenTsdb addErrback(Callback<Object, Exception> errback) {
         this.errorCallback = errback;
         return this;
     }
@@ -69,7 +73,7 @@ public class OpenTsdbBolt implements IRichBolt {
      * @param async set synchronous/asynchronous mode
      * @return This so you can do method chaining.
      */
-    public OpenTsdbBolt setAsync(boolean async) {
+    public StoreToOpenTsdb setAsync(boolean async) {
         this.async = async;
         return this;
     }
@@ -79,23 +83,41 @@ public class OpenTsdbBolt implements IRichBolt {
      *                (in millisecond).
      * @return This so you can do method chaining.
      */
-    public OpenTsdbBolt setTimeout(long timeout) {
+    public StoreToOpenTsdb setTimeout(long timeout) {
         this.timeout = timeout;
         return this;
     }
 
-    @Override
-    public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
-        this.collector = collector;
-        this.tsdb = OpenTsdbClientFactory.getTsdbClient(conf, this.cluster, this.name);
-        errback = new Errback();
+    /**
+     * <p>
+     * LOG : Only log error and don't return any results.<br/>
+     * RETRY : Ask the spout to replay the batch.<br/>
+     * FAILFAST : Let the function crash.<br/>
+     * null/NOOP : Do nothing.
+     * </p>
+     * <p>
+     * http://svendvanderveken.wordpress.com/2014/02/05/error-handling-in-storm-trident-topologies/
+     * </p>
+     *
+     * @param strategy Set the strategy to adopt in case of AsyncHBase execption
+     * @return This so you can do method chaining.
+     */
+    public StoreToOpenTsdb setFailStrategy(FailStrategy strategy) {
+        this.failStrategy = strategy;
+        return this;
     }
 
     @Override
-    public void execute(final Tuple tuple) {
-        List<IOpenTsdbFieldMapper> mappers = this.mapper.getFieldMappers();
+    public void prepare(Map conf, TridentOperationContext context) {
+        super.prepare(conf, context);
+        this.tsdb = OpenTsdbClientFactory.getTsdbClient(conf, this.cluster, this.name);
+    }
+
+    @Override
+    public void execute(final TridentTuple tuple, final TridentCollector collector) {
+        List<IOpenTsdbTridentFieldMapper> mappers = this.mapper.getFieldMappers();
         ArrayList<Deferred<Object>> requests = new ArrayList<>(mappers.size());
-        for (IOpenTsdbFieldMapper fieldMapper : mappers) {
+        for (IOpenTsdbTridentFieldMapper fieldMapper : mappers) {
             double value = fieldMapper.getValue(tuple);
             if (value == (long) value) {
                 try {
@@ -104,7 +126,7 @@ public class OpenTsdbBolt implements IRichBolt {
                         fieldMapper.getTimestamp(tuple),
                         (long) value,
                         fieldMapper.getTags(tuple)
-                    ).addErrback(errback));
+                    ));
                 } catch (Exception ex) {
                     requests.add(Deferred.fromError(ex));
                 }
@@ -136,11 +158,9 @@ public class OpenTsdbBolt implements IRichBolt {
             log.warn("Throttling...");
             long throttle_time = System.nanoTime();
             try {
-                results.joinUninterruptibly(this.timeout);
-                this.collector.ack(tuple);
+                collector.emit(results.joinUninterruptibly(this.timeout));
             } catch (Exception ex) {
-                log.error("AsyncHBase exception : " + ex.toString());
-                this.collector.fail(tuple);
+                this.handleFailure(ex);
             } finally {
                 throttle_time = System.nanoTime() - throttle_time;
                 if (throttle_time < 1000000000L) {
@@ -148,7 +168,7 @@ public class OpenTsdbBolt implements IRichBolt {
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException ex) {
-                        log.error("AsyncHBase exception : " + ex.toString());
+                        this.handleFailure(ex);
                     }
                 }
                 log.info("Done throttling...");
@@ -156,32 +176,25 @@ public class OpenTsdbBolt implements IRichBolt {
             }
         } else if (!this.async) {
             try {
-                this.collector.emit(results.joinUninterruptibly(this.timeout));
-                this.collector.ack(tuple);
+                collector.emit(results.joinUninterruptibly(this.timeout));
             } catch (Exception ex) {
-                log.error("AsyncHBase exception : " + ex.toString());
-                this.collector.fail(tuple);
+                this.handleFailure(ex);
             }
-            this.collector.ack(tuple);
         } else {
             results.addCallbacks(new Callback<Object, ArrayList<Object>>() {
                 @Override
                 public Object call(ArrayList<Object> results) throws Exception {
                     synchronized (collector) {
                         collector.emit(results);
-                        collector.ack(tuple);
                     }
                     return null;
                 }
             }, new Callback<Object, Exception>() {
                 @Override
                 public Object call(Exception ex) throws Exception {
-                    // ERROR
-                    log.error("AsyncHBase exception : " + ex.toString());
-                    synchronized (collector) {
-                        collector.fail(tuple);
-                    }
-                    return this;
+                    // TODO : This may trigger the wrong batch to be replayed ?
+                    handleFailure(ex);
+                    return ex;
                 }
             });
         }
@@ -189,33 +202,25 @@ public class OpenTsdbBolt implements IRichBolt {
 
     @Override
     public void cleanup() {
-
+        this.tsdb.shutdown();
     }
 
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-
-    }
-
-    @Override
-    public Map<String, Object> getComponentConfiguration() {
-        return null;
-    }
-
-    /**
-     * <p>
-     * This error callback checks if there is a need to throttle
-     * </p>
-     */
-    final class Errback implements Callback<Object, Exception> {
-        @Override
-        public Object call(final Exception ex) {
-            if (ex instanceof PleaseThrottleException) {
-                throttle = true;
-                return null;
-            }
-            log.warn("hbase exception " + ex.toString());
-            return ex;
+    private void handleFailure(Exception ex) {
+        if (ex instanceof PleaseThrottleException) {
+            throttle = true;
+        }
+        switch (this.failStrategy) {
+            case LOG:
+                log.error("AsyncHBase error while executing HBase RPC" + ex.getMessage());
+                break;
+            case RETRY:
+                log.error("AsyncHBase error while executing HBase RPC" + ex.getMessage());
+                throw new FailedException("AsyncHBase error while executing HBase RPC " + ex.getMessage());
+            case FAILFAST:
+                log.error("AsyncHBase error while executing HBase RPC" + ex.getMessage());
+                throw new RuntimeException("AsyncHBase error while executing HBase RPC " + ex.getMessage());
         }
     }
+
+    public enum FailStrategy {NOOP, LOG, FAILFAST, RETRY}
 }

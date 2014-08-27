@@ -1,21 +1,21 @@
-package net.ovh.storm.opentsdb.trident.mapper;
+package storm.opentsdb.trident.mapper;
 
-import net.ovh.storm.opentsdb.model.IOpenTsdbEvent;
+import storm.opentsdb.model.IOpenTsdbEvent;
 import storm.trident.tuple.TridentTuple;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class OpenTsdbTridentEventField implements OpenTsdbTridentFieldMapper {
+public class OpenTsdbTridentEventFieldMapper implements IOpenTsdbTridentFieldMapper {
     private String eventField;
     private List<String> validTags;
 
-    public OpenTsdbTridentEventField(String eventField) {
+    public OpenTsdbTridentEventFieldMapper(String eventField) {
         this.eventField = eventField;
     }
 
-    public OpenTsdbTridentEventField setValidTags(List<String> validTags) {
+    public OpenTsdbTridentEventFieldMapper setValidTags(List<String> validTags) {
         this.validTags = validTags;
         return this;
     }
@@ -58,5 +58,10 @@ public class OpenTsdbTridentEventField implements OpenTsdbTridentFieldMapper {
         }
 
         return tags;
+    }
+
+    @Override
+    public void prepare(Map conf) {
+
     }
 }
