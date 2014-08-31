@@ -1,3 +1,7 @@
+/*
+ * Charles-Antoine Mathieu <charles-antoine.mathieu@ovh.net>
+ */
+
 package storm.opentsdb.trident.mapper;
 
 import java.io.Serializable;
@@ -5,7 +9,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This interface holds several fields mappers ( RPC configuration ) by name
+ * <p>
+ * This interface maps a storm tuple to
+ * one or more fields mappers
+ * </p>
  */
 public interface IOpenTsdbTridentMapper extends Serializable {
 

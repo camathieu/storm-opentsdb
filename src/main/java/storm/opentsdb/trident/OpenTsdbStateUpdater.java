@@ -1,3 +1,7 @@
+/*
+ * Charles-Antoine Mathieu <charles-antoine.mathieu@ovh.net>
+ */
+
 package storm.opentsdb.trident;
 
 import com.stumbleupon.async.Callback;
@@ -10,6 +14,10 @@ import storm.trident.tuple.TridentTuple;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Update an OpenTsdbState<br/>
+ * Use this function with Stream.partitionAggregate(State,Aggregator,StateUpdater,...)
+ */
 public class OpenTsdbStateUpdater extends BaseStateUpdater<OpenTsdbState> {
     public static final Logger log = LoggerFactory.getLogger(storm.opentsdb.trident.OpenTsdbStateUpdater.class);
 

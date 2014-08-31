@@ -1,20 +1,36 @@
+/*
+ * Charles-Antoine Mathieu <charles-antoine.mathieu@ovh.net>
+ */
+
 package storm.opentsdb.utils;
 
 import net.opentsdb.core.TSDB;
 import net.opentsdb.utils.Config;
-import org.hbase.async.HBaseClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import storm.asynchbase.utils.AsyncHBaseClientFactory;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Map;
 
+/**
+ * <p>
+ * Instentiate an OpenTSDB client instance from the
+ * topology configuration. As you should have only one
+ * AsyncHBase client per application storm-opentsdb uses
+ * the storm-asynchbase client factory.
+ * </p>
+ */
 public class OpenTsdbClientFactory implements Serializable {
     public static final Logger log = LoggerFactory.getLogger(OpenTsdbClientFactory.class);
 
+    /**
+     * @param config       Topology config.
+     * @param hBaseCluster The HBase cluster to use.
+     * @param name         Topology config key.
+     * @return
+     */
     public static TSDB getTsdbClient(Map config, String hBaseCluster, String name) {
         log.info("New OpenTSDB client : " + name);
         try {

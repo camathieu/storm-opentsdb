@@ -1,3 +1,7 @@
+/*
+ * Charles-Antoine Mathieu <charles-antoine.mathieu@ovh.net>
+ */
+
 package storm.opentsdb.example;
 
 import backtype.storm.Config;
@@ -6,22 +10,25 @@ import backtype.storm.LocalDRPC;
 import backtype.storm.StormSubmitter;
 import backtype.storm.generated.StormTopology;
 import backtype.storm.tuple.Fields;
-import storm.asynchbase.example.spout.RandomKeyValueBatchSpout;
-import storm.asynchbase.example.spout.RandomKeyValueSpout;
-import storm.opentsdb.trident.OpenTsdbStateUpdater;
-import storm.opentsdb.trident.mapper.OpenTsdbTridentEventFieldMapper;
-import storm.opentsdb.trident.mapper.OpenTsdbTridentMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import storm.asynchbase.example.spout.RandomKeyValueBatchSpout;
+import storm.asynchbase.example.trident.operation.StreamRateAggregator;
+import storm.opentsdb.example.trident.operation.OpenTsdbTupleAdaptatorFunction;
+import storm.opentsdb.trident.OpenTsdbStateFactory;
+import storm.opentsdb.trident.OpenTsdbStateUpdater;
 import storm.trident.Stream;
+import storm.trident.TridentState;
 import storm.trident.TridentTopology;
-import storm.trident.operation.builtin.Debug;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Generate a random key,value stream.
+ * Use an aggregator to compute the stream rate and save it to OpenTSDB under metric "steam_rate"
+ */
 public class OpenTsdbTridentExampleTopology {
     public static final Logger log = LoggerFactory.getLogger(OpenTsdbTridentExampleTopology.class);
 
@@ -29,18 +36,19 @@ public class OpenTsdbTridentExampleTopology {
 
         TridentTopology topology = new TridentTopology();
 
-        Stream stream = topology.newStream("stream", new RandomKeyValueBatchSpout(10).setSleep(1000)).parallelismHint(5);
+        Stream stream = topology.newStream("stream", new RandomKeyValueBatchSpout(1000).setSleep(100)).parallelismHint(5);
 
-        stream.each(new Fields("event"), new Debug());
-
-        /**
-         * Using Tuple mapper
-         */
-
-        stream.partitionPersist(
-            new storm.opentsdb.trident.OpenTsdbStateFactory("hbase-cluster", "test-tsdb"),
-            new Fields("metric", "timestamp", "value", "tags"),
-            new OpenTsdbStateUpdater());
+        TridentState streamRate = stream
+            .aggregate(new Fields(), new StreamRateAggregator(2), new Fields("rate"))
+            .each(
+                new Fields("rate"),
+                new OpenTsdbTupleAdaptatorFunction("stream_rate", "rate", new HashMap<String, String>()),
+                new Fields("metric", "timestamp", "value", "tags")
+            ).partitionPersist(
+                new OpenTsdbStateFactory("hbase-cluster", "test-tsdb"),
+                new Fields("rate"),
+                new OpenTsdbStateUpdater()
+            ).parallelismHint(5);
 
         return topology.build();
     }

@@ -13,6 +13,11 @@ import storm.trident.tuple.TridentTuple;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * <p>
+ * TODO implements queries for trident
+ * </p>
+ */
 public class OpenTsdbStateQuery extends BaseQueryFunction<OpenTsdbState, Deferred<ArrayList<KeyValue>>> {
     @Override
     public List<Deferred<ArrayList<KeyValue>>> batchRetrieve(OpenTsdbState state, List<TridentTuple> args) {

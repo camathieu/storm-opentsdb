@@ -12,20 +12,20 @@ import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.topology.base.BaseBasicBolt;
-import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import storm.asynchbase.example.spout.RandomKeyValueSpout;
 import storm.opentsdb.bolt.OpenTsdbBolt;
-import storm.opentsdb.example.bolt.OpenTsdbTupleGeneratorBolt;
-import storm.opentsdb.model.OpenTsdbEvent;
+import storm.opentsdb.example.bolt.OpenTsdbTupleAdadptatorBolt;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Generate random values every 100ms to the metric OpenTsdbBoltTupleExampleTopology
+ * This uses a tuple mapper ( the event fields contains an OpenTsdbEvent object )
+ */
 public class OpenTsdbBoltTupleExampleTopology {
     public static final Logger log = LoggerFactory.getLogger(OpenTsdbBoltTupleExampleTopology.class);
 
@@ -46,7 +46,7 @@ public class OpenTsdbBoltTupleExampleTopology {
          * Random KeyValue generator
          **/
 
-        RandomKeyValueSpout randomKeyValueSpout = new RandomKeyValueSpout().setSleep(1000);
+        RandomKeyValueSpout randomKeyValueSpout = new RandomKeyValueSpout().setSleep(100);
 
         /**
          * Topology
@@ -54,18 +54,17 @@ public class OpenTsdbBoltTupleExampleTopology {
 
         TopologyBuilder builder = new TopologyBuilder();
 
-        ArrayList<String> validTags = new ArrayList<String>();
-        validTags.add("foo");
-
         builder.setSpout("spout", randomKeyValueSpout, 1);
         builder
-            .setBolt("events", new OpenTsdbTupleGeneratorBolt("OpenTsdbBoltTupleExampleTopology", new HashMap<String, String>()), 1)
+            .setBolt("events", new OpenTsdbTupleAdadptatorBolt("OpenTsdbBoltTupleExampleTopology", "value", new HashMap<String, String>())
+                .SetMillisec(true), 1)
             .shuffleGrouping("spout");
 
         builder
             .setBolt("print", new PrinterBolt(), 1)
             .shuffleGrouping("events");
 
+        // Automaticaly create default mapper to fields metric, timestamp, value and tags
         builder
             .setBolt("opentsdb", new OpenTsdbBolt("hbase-cluster", "test-tsdb"), 1)
             .shuffleGrouping("events");

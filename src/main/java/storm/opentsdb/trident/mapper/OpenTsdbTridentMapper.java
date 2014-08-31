@@ -1,12 +1,24 @@
+/*
+ * Charles-Antoine Mathieu <charles-antoine.mathieu@ovh.net>
+ */
+
 package storm.opentsdb.trident.mapper;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This mapper maps a storm tuple to
+ * one or more fields mappers
+ */
 public class OpenTsdbTridentMapper implements IOpenTsdbTridentMapper {
     private ArrayList<IOpenTsdbTridentFieldMapper> fieldMappers;
 
+    /**
+     * @param fieldMapper Add a FieldMapper to the mapper list.
+     * @return This so you can do method chaining.
+     */
     public OpenTsdbTridentMapper addFieldMapper(IOpenTsdbTridentFieldMapper fieldMapper) {
         if (this.fieldMappers == null) {
             this.fieldMappers = new ArrayList<>();
@@ -15,6 +27,9 @@ public class OpenTsdbTridentMapper implements IOpenTsdbTridentMapper {
         return this;
     }
 
+    /**
+     * @return The list of mappers to execute.
+     */
     @Override
     public List<IOpenTsdbTridentFieldMapper> getFieldMappers() {
         return fieldMappers;
@@ -28,7 +43,6 @@ public class OpenTsdbTridentMapper implements IOpenTsdbTridentMapper {
      *
      * @param conf Topology configuration.
      */
-
     @Override
     public void prepare(Map conf) {
         for (IOpenTsdbTridentFieldMapper mapper : this.fieldMappers) {
