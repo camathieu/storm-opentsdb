@@ -5,6 +5,10 @@
 package storm.opentsdb.bolt.mapper;
 
 import backtype.storm.tuple.Tuple;
+import storm.opentsdb.utils.serializer.OpenTsdbMetricSerializer;
+import storm.opentsdb.utils.serializer.OpenTsdbTagsSerializer;
+import storm.opentsdb.utils.serializer.OpenTsdbTimestampSerializer;
+import storm.opentsdb.utils.serializer.OpenTsdbValueSerializer;
 
 import java.util.Iterator;
 import java.util.List;
@@ -21,13 +25,24 @@ import java.util.Map;
  * so providing an empty map will result in this mapper to add
  * a foo=bar tag to your put.
  * </p>
- * TODO implements serializers
  */
 public class OpenTsdbTupleFieldMapper implements IOpenTsdbFieldMapper {
-    private final String metricField;
-    private final String timestampField;
-    private final String valueField;
-    private final String tagsField;
+
+    private String metric;
+    private String metricField;
+    private OpenTsdbMetricSerializer metricSerializer;
+
+    private Long timestamp;
+    private String timestampField;
+    private OpenTsdbTimestampSerializer timestampSerializer;
+
+    private Double value;
+    private String valueField;
+    private OpenTsdbValueSerializer valueSerializer;
+
+    private Map<String, String> tags;
+    private String tagsField;
+    private OpenTsdbTagsSerializer tagsSerializer;
 
     private List<String> validTags;
 
@@ -64,38 +79,211 @@ public class OpenTsdbTupleFieldMapper implements IOpenTsdbFieldMapper {
     }
 
     /**
+     * @param metric The metric to set.
+     * @return This so you can do method chaining.
+     */
+    public OpenTsdbTupleFieldMapper setMetric(Object metric) {
+        if (this.metricSerializer != null) {
+            this.metric = this.metricSerializer.serialize(metric);
+        } else {
+            this.metric = (String) metric;
+        }
+        return this;
+    }
+
+    /**
+     * @param metricField Name of the tuple field containing the metric to use.
+     * @return This so you can do method chaining.
+     */
+    public OpenTsdbTupleFieldMapper setMetricField(String metricField) {
+        this.metricField = metricField;
+        return this;
+    }
+
+    /**
+     * <p>
+     * Note that if you use a constant value ( setMetric )
+     * you have to provide the serializer before so that the serialization
+     * is done only once.
+     * </p>
+     *
+     * @param metricSerializer The metric serializer to use.
+     * @return This so you can do method chaining.
+     */
+    public OpenTsdbTupleFieldMapper setMetricSerializer(OpenTsdbMetricSerializer metricSerializer) {
+        this.metricSerializer = metricSerializer;
+        return this;
+    }
+
+    /**
      * @param tuple The storm tuple to process.
-     * @return The metric from the OpenTsdbEvent.
+     * @return The metric to use.
      */
     public String getMetric(Tuple tuple) {
+        if (this.metric != null) {
+            return this.metric;
+        }
+        if (this.metricSerializer != null) {
+            return this.metricSerializer.serialize(tuple.getValueByField(this.metricField));
+        }
         return tuple.getStringByField(this.metricField);
     }
 
     /**
-     * @param tuple The storm tuple to process
-     * @return The timestamp from the OpenTsdbEvent.
+     * @param timestamp The timestamp to set.
+     * @return This so you can do method chaining.
+     */
+    public OpenTsdbTupleFieldMapper setTimestamp(Object timestamp) {
+        if (this.timestampSerializer != null) {
+            this.timestamp = this.timestampSerializer.serialize(timestamp);
+        } else {
+            this.timestamp = (Long) timestamp;
+        }
+        return this;
+    }
+
+    /**
+     * @param timestampField Name of the tuple field containing the timestamp to use.
+     * @return This so you can do method chaining.
+     */
+    public OpenTsdbTupleFieldMapper setTimestampField(String timestampField) {
+        this.timestampField = timestampField;
+        return this;
+    }
+
+    /**
+     * <p>
+     * Note that if you use a constant value ( setTimestamp )
+     * you have to provide the serializer before so that the serialization
+     * is done only once.
+     * </p>
+     *
+     * @param timestampSerializer The timestamp serializer to use.
+     * @return This so you can do method chaining.
+     */
+    public OpenTsdbTupleFieldMapper setTimestampSerializer(OpenTsdbTimestampSerializer timestampSerializer) {
+        this.timestampSerializer = timestampSerializer;
+        return this;
+    }
+
+    /**
+     * @param tuple The storm tuple to process.
+     * @return The timestamp to use.
      */
     public long getTimestamp(Tuple tuple) {
+        if (this.timestamp != null) {
+            return this.timestamp;
+        }
+        if (this.timestampSerializer != null) {
+            return this.timestampSerializer.serialize(tuple.getValueByField(this.timestampField));
+        }
         return tuple.getLongByField(this.timestampField);
     }
 
     /**
-     * @param tuple The storm tuple to process.
-     * @return The value from the OpenTsdbEvent.
+     * @param value The value to set.
+     * @return This so you can do method chaining.
      */
-    public double getValue(Tuple tuple) {
-        return tuple.getDoubleByField(this.valueField);
+    public OpenTsdbTupleFieldMapper setValue(Object value) {
+        if (this.valueSerializer != null) {
+            this.value = this.valueSerializer.serialize(value);
+        } else {
+            this.value = (Double) value;
+        }
+        return this;
+    }
+
+    /**
+     * @param valueField Name of the tuple field containing the value to use.
+     * @return This so you can do method chaining.
+     */
+    public OpenTsdbTupleFieldMapper setValueField(String valueField) {
+        this.valueField = valueField;
+        return this;
+    }
+
+    /**
+     * <p>
+     * Note that if you use a constant value ( setValue )
+     * you have to provide the serializer before so that the serialization
+     * is done only once.
+     * </p>
+     *
+     * @param valueSerializer The value serializer to use.
+     * @return This so you can do method chaining.
+     */
+    public OpenTsdbTupleFieldMapper setValueSerializer(OpenTsdbValueSerializer valueSerializer) {
+        this.valueSerializer = valueSerializer;
+        return this;
     }
 
     /**
      * @param tuple The storm tuple to process.
-     * @return the tags from the OpenTsdbEvent.
+     * @return The value to use.
      */
-    public Map<String, String> getTags(Tuple tuple) {
-        Map<String, String> tags = (Map<String, String>) tuple.getValueByField(this.tagsField);
+    public double getValue(Tuple tuple) {
+        if( this.value != null) {
+            return this.value;
+        }
+        if (this.valueSerializer != null) {
+            return this.valueSerializer.serialize(tuple.getValueByField(this.valueField));
+        }
+        return tuple.getDoubleByField(this.valueField);
+    }
 
-        if (tags.size() == 0) {
-            tags.put("foo", "bar");
+    /**
+     * @param tags The tags to set.
+     * @return This so you can do method chaining.
+     */
+    @SuppressWarnings("unchecked")
+    public OpenTsdbTupleFieldMapper setTags(Object tags) {
+        if (this.tagsSerializer != null) {
+            this.tags = this.tagsSerializer.serialize(tags);
+        } else {
+            this.tags = (Map<String, String>) tags;
+        }
+        return this;
+    }
+
+    /**
+     * @param tagsField Name of the tuple field containing the tags to use.
+     * @return This so you can do method chaining.
+     */
+    public OpenTsdbTupleFieldMapper setTagsField(String tagsField) {
+        this.tagsField = tagsField;
+        return this;
+    }
+
+    /**
+     * <p>
+     * Note that if you use a constant tags ( setTags )
+     * you have to provide the serializer before so that the serialization
+     * is done only once.
+     * </p>
+     *
+     * @param tagsSerializer The tags serializer to use.
+     * @return This so you can do method chaining.
+     */
+    public OpenTsdbTupleFieldMapper setTagsSerializer(OpenTsdbTagsSerializer tagsSerializer) {
+        this.tagsSerializer = tagsSerializer;
+        return this;
+    }
+
+    /**
+     * @param tuple The storm tuple to process.
+     * @return The tags to use.
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, String> getTags(Tuple tuple) {
+        Map<String, String> tags;
+        if (this.tags != null) {
+            tags = this.tags;
+        } else {
+            if (this.tagsSerializer != null) {
+                tags = this.tagsSerializer.serialize(tuple.getValueByField(this.tagsField));
+            } else {
+                tags = (Map<String, String>) tuple.getValueByField(this.tagsField);
+            }
         }
 
         if (this.validTags != null) {
@@ -107,6 +295,10 @@ public class OpenTsdbTupleFieldMapper implements IOpenTsdbFieldMapper {
                     }
                 }
             }
+        }
+
+        if (tags.size() == 0) {
+            tags.put("foo", "bar");
         }
 
         return tags;
@@ -121,6 +313,17 @@ public class OpenTsdbTupleFieldMapper implements IOpenTsdbFieldMapper {
      */
     @Override
     public void prepare(Map conf) {
-
+        if (this.metricSerializer != null) {
+            this.metricSerializer.prepare(conf);
+        }
+        if (this.timestampSerializer != null) {
+            this.timestampSerializer.prepare(conf);
+        }
+        if (this.valueSerializer != null) {
+            this.valueSerializer.prepare(conf);
+        }
+        if (this.tagsSerializer != null) {
+            this.tagsSerializer.prepare(conf);
+        }
     }
 }
