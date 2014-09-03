@@ -35,10 +35,10 @@ each hbase client and for each opentsdb instance you want to use.
  * Mapper  
 To map Storm tuple to OpenTSDB put requests you'll have to provide
 some mappers to the bolts, function, states.
-You'll be able to use method chaining syntax to configure them.
-You'll be soon able to map a put parameter to a tuple field or to a
-fixed constant value and to provide serializers to format input
-values to a specific type.
+You can use method chaining syntax to configure them.
+You can map a put parameter to a tuple field or to a
+fixed constant value and you can also provide serializers to format 
+input values.
 
 For now you have two basic field mapper types, TupleMapper which maps
 tuple fields metric, timestamp, value and tags to an OpenTSDB put
@@ -89,5 +89,4 @@ You have to provide a mapper.
 TODO
 ----
 
- * Enhance FieldMappers to manage static values and serializers
  * Handle OpenTSDB query to get data from OpenTSDB to Storm
