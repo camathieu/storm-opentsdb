@@ -191,7 +191,19 @@ public class OpenTsdbTupleFieldMapper implements IOpenTsdbFieldMapper {
         if (this.valueSerializer != null) {
             this.value = this.valueSerializer.serialize(value);
         } else {
-            this.value = (Double) value;
+            if( value instanceof Short) {
+                this.value = new Double((Short)value);
+            } else if( value instanceof Integer) {
+                this.value = new Double((Integer)value);
+            } else if( value instanceof Long ) {
+                this.value = new Double((Long)value);
+            } else if( value instanceof Float) {
+                this.value = new Double((Float)value);
+            } else if ( value instanceof Double) {
+                this.value = (Double) value;
+            } else {
+                throw new IllegalArgumentException("Invalid value type");
+            }
         }
         return this;
     }
@@ -231,7 +243,21 @@ public class OpenTsdbTupleFieldMapper implements IOpenTsdbFieldMapper {
         if (this.valueSerializer != null) {
             return this.valueSerializer.serialize(tuple.getValueByField(this.valueField));
         }
-        return tuple.getDoubleByField(this.valueField);
+
+        Object value = tuple.getValueByField(this.valueField);
+        if( value instanceof Short) {
+            return ((Short) value).doubleValue();
+        } else if( value instanceof Integer) {
+            return ((Integer) value).doubleValue();
+        } else if( value instanceof Long) {
+            return ((Long) value).doubleValue();
+        } else if( value instanceof Float) {
+            return ((Float) value).doubleValue();
+        } else if ( value instanceof Double) {
+            return (Double) value;
+        } else {
+            throw new IllegalArgumentException("Invalid value type");
+        }
     }
 
     /**
