@@ -9,7 +9,7 @@ import net.opentsdb.core.TSDB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import storm.opentsdb.trident.mapper.IOpenTsdbTridentFieldMapper;
-import storm.opentsdb.trident.mapper.OpenTsdbTridentMapper;
+import storm.opentsdb.trident.mapper.IOpenTsdbTridentMapper;
 import storm.trident.state.State;
 import storm.trident.tuple.TridentTuple;
 
@@ -34,13 +34,13 @@ public class OpenTsdbState implements State {
     public static final Logger log = LoggerFactory.getLogger(OpenTsdbState.class);
 
     private final TSDB tsdb;
-    private final OpenTsdbTridentMapper mapper;
+    private final IOpenTsdbTridentMapper mapper;
 
     /**
      * @param tsdb   Initialized OpenTSDB client ( used by the factory ).
      * @param mapper A mapper containing mapping from tuple to puts.
      */
-    public OpenTsdbState(TSDB tsdb, OpenTsdbTridentMapper mapper) {
+    public OpenTsdbState(TSDB tsdb, IOpenTsdbTridentMapper mapper) {
         this.tsdb = tsdb;
         this.mapper = mapper;
     }

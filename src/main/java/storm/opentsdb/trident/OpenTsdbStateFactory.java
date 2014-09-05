@@ -5,6 +5,7 @@
 package storm.opentsdb.trident;
 
 import backtype.storm.task.IMetricsContext;
+import storm.opentsdb.trident.mapper.IOpenTsdbTridentMapper;
 import storm.opentsdb.trident.mapper.OpenTsdbTridentMapper;
 import storm.opentsdb.trident.mapper.OpenTsdbTridentTupleFieldMapper;
 import storm.opentsdb.utils.OpenTsdbClientFactory;
@@ -19,14 +20,14 @@ import java.util.Map;
 public class OpenTsdbStateFactory implements StateFactory {
     private final String cluster;
     private final String name;
-    private final OpenTsdbTridentMapper mapper;
+    private final IOpenTsdbTridentMapper mapper;
 
     /**
      * @param cluster The HBase cluster to use.
      * @param name    The OpenTSDB instance to use.
      * @param mapper  A mapper to map trident tuple to OpenTSDB put request.
      */
-    public OpenTsdbStateFactory(String cluster, String name, OpenTsdbTridentMapper mapper) {
+    public OpenTsdbStateFactory(String cluster, String name, IOpenTsdbTridentMapper mapper) {
         this.cluster = cluster;
         this.name = name;
         this.mapper = mapper;

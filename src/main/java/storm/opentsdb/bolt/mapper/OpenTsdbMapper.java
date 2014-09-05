@@ -4,6 +4,9 @@
 
 package storm.opentsdb.bolt.mapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +16,7 @@ import java.util.Map;
  * one or more fields mappers
  */
 public class OpenTsdbMapper implements IOpenTsdbMapper {
+    public static final Logger log = LoggerFactory.getLogger(OpenTsdbMapper.class);
     private ArrayList<IOpenTsdbFieldMapper> fieldMappers;
 
     /**

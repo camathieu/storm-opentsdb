@@ -31,17 +31,29 @@ public class OpenTsdbClientFactory implements Serializable {
      * @param name         Topology config key.
      * @return
      */
+    @SuppressWarnings("unchecked")
     public static TSDB getTsdbClient(Map config, String hBaseCluster, String name) {
         log.info("New OpenTSDB client : " + name);
         try {
             Map<String, String> conf = (Map<String, String>) config.get(name);
+            if (conf == null) {
+                throw new RuntimeException("Missing configuration for OpenTsdb client : " + name);
+            }
+
             Config openTsdbConfig = new net.opentsdb.utils.Config(true);
             for (String key : conf.keySet()) {
                 openTsdbConfig.overrideConfig(key, conf.get(key));
             }
-            return new TSDB(
+            TSDB tsdb = new TSDB(
                 AsyncHBaseClientFactory.getHBaseClient(config, hBaseCluster),
                 openTsdbConfig);
+
+            try {
+                tsdb.checkNecessaryTablesExist().joinUninterruptibly();
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+            return tsdb;
         } catch (IOException ex) {
             log.error("OpenTSDB config execption : should not be here !!!");
             return null;

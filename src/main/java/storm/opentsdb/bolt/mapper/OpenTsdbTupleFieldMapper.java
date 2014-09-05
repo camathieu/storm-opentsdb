@@ -5,6 +5,8 @@
 package storm.opentsdb.bolt.mapper;
 
 import backtype.storm.tuple.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import storm.opentsdb.utils.serializer.OpenTsdbMetricSerializer;
 import storm.opentsdb.utils.serializer.OpenTsdbTagsSerializer;
 import storm.opentsdb.utils.serializer.OpenTsdbTimestampSerializer;
@@ -27,6 +29,7 @@ import java.util.Map;
  * </p>
  */
 public class OpenTsdbTupleFieldMapper implements IOpenTsdbFieldMapper {
+    public static final Logger log = LoggerFactory.getLogger(OpenTsdbTupleFieldMapper.class);
 
     private String metric;
     private String metricField;

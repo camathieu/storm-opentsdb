@@ -2,7 +2,7 @@
  * Charles-Antoine Mathieu <charles-antoine.mathieu@ovh.net>
  */
 
-package storm.opentsdb.example;
+package storm.opentsdb.example.topology;
 
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;

@@ -4,6 +4,8 @@
 
 package storm.opentsdb.trident.mapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import storm.opentsdb.model.IOpenTsdbEvent;
 import storm.trident.tuple.TridentTuple;
 
@@ -26,6 +28,8 @@ import java.util.Map;
  * TODO implements serializers
  */
 public class OpenTsdbTridentEventFieldMapper implements IOpenTsdbTridentFieldMapper {
+    public static final Logger log = LoggerFactory.getLogger(OpenTsdbTridentEventFieldMapper.class);
+
     private String eventField;
     private List<String> validTags;
 

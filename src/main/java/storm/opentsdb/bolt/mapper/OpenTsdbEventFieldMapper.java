@@ -5,6 +5,8 @@
 package storm.opentsdb.bolt.mapper;
 
 import backtype.storm.tuple.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import storm.opentsdb.model.IOpenTsdbEvent;
 
 import java.util.Iterator;
@@ -26,6 +28,8 @@ import java.util.Map;
  * TODO implements serializers
  */
 public class OpenTsdbEventFieldMapper implements IOpenTsdbFieldMapper {
+    public static final Logger log = LoggerFactory.getLogger(OpenTsdbEventFieldMapper.class);
+
     private String eventField;
     private List<String> validTags;
 

@@ -4,6 +4,8 @@
 
 package storm.opentsdb.trident.mapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import storm.opentsdb.utils.serializer.OpenTsdbMetricSerializer;
 import storm.opentsdb.utils.serializer.OpenTsdbTagsSerializer;
 import storm.opentsdb.utils.serializer.OpenTsdbTimestampSerializer;
@@ -27,6 +29,7 @@ import java.util.Map;
  * </p>
  */
 public class OpenTsdbTridentTupleFieldMapper implements IOpenTsdbTridentFieldMapper {
+    public static final Logger log = LoggerFactory.getLogger(OpenTsdbTridentTupleFieldMapper.class);
 
     private String metric;
     private String metricField;
