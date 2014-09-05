@@ -244,20 +244,7 @@ public class OpenTsdbTupleFieldMapper implements IOpenTsdbFieldMapper {
             return this.valueSerializer.serialize(tuple.getValueByField(this.valueField));
         }
 
-        Object value = tuple.getValueByField(this.valueField);
-        if( value instanceof Short) {
-            return ((Short) value).doubleValue();
-        } else if( value instanceof Integer) {
-            return ((Integer) value).doubleValue();
-        } else if( value instanceof Long) {
-            return ((Long) value).doubleValue();
-        } else if( value instanceof Float) {
-            return ((Float) value).doubleValue();
-        } else if ( value instanceof Double) {
-            return (Double) value;
-        } else {
-            throw new IllegalArgumentException("Invalid value type");
-        }
+        return tuple.getDoubleByField(this.valueField);
     }
 
     /**
