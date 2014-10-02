@@ -32,7 +32,7 @@ public class OpenTsdbClientFactory implements Serializable {
      * @return
      */
     @SuppressWarnings("unchecked")
-    public static TSDB getTsdbClient(Map config, String hBaseCluster, String name) {
+    public synchronized static TSDB getTsdbClient(Map config, String hBaseCluster, String name) {
         log.info("New OpenTSDB client : " + name);
         try {
             Map<String, String> conf = (Map<String, String>) config.get(name);
