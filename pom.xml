@@ -8,7 +8,7 @@
 
     <groupId>storm</groupId>
     <artifactId>storm-opentsdb</artifactId>
-    <version>0.11</version>
+    <version>0.12</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -30,7 +30,7 @@
         <dependency>
             <groupId>storm</groupId>
             <artifactId>storm-asynchbase</artifactId>
-            <version>0.11</version>
+            <version>0.12</version>
         </dependency>
 
         <!-- OPEN TSDB -->
