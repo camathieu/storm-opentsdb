@@ -68,8 +68,6 @@ public class OpenTsdbBolt implements IRichBolt {
     private final String cluster;
     private final String name;
     private final IOpenTsdbMapper mapper;
-    Callback<ArrayList<Object>, ArrayList<Object>> successCallback;
-    Callback<Object, Exception> errorCallback;
     private OutputCollector collector;
     private TSDB tsdb;
     private boolean async = true;
@@ -99,24 +97,6 @@ public class OpenTsdbBolt implements IRichBolt {
         this(cluster, name,
             new OpenTsdbMapper()
                 .addFieldMapper(new OpenTsdbTupleFieldMapper("metric", "timestamp", "value", "tags")));
-    }
-
-    /**
-     * @param callback Add a success callback between RPC return and tuple ack/emit.
-     * @return This so you can do method chaining.
-     */
-    public OpenTsdbBolt addCallback(Callback<ArrayList<Object>, ArrayList<Object>> callback) {
-        this.successCallback = callback;
-        return this;
-    }
-
-    /**
-     * @param errback Add an error callback between RPC return and tuple failure.
-     * @return This so you can do method chaining.
-     */
-    public OpenTsdbBolt addErrback(Callback<Object, Exception> errback) {
-        this.errorCallback = errback;
-        return this;
     }
 
     /**
@@ -177,14 +157,6 @@ public class OpenTsdbBolt implements IRichBolt {
         }
 
         Deferred<ArrayList<Object>> results = Deferred.group(requests);
-
-        if (this.successCallback != null) {
-            results = results.addCallback(this.successCallback);
-        }
-
-        if (this.errorCallback != null) {
-            results = results.addErrback(this.errorCallback);
-        }
 
         if (throttle) {
             log.warn("Throttling...");
