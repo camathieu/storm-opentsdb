@@ -70,7 +70,6 @@ public class OpenTsdbBolt implements IRichBolt {
     private final IOpenTsdbMapper mapper;
     Callback<ArrayList<Object>, ArrayList<Object>> successCallback;
     Callback<Object, Exception> errorCallback;
-    private Errback errback;
     private OutputCollector collector;
     private TSDB tsdb;
     private boolean async = true;
@@ -144,7 +143,6 @@ public class OpenTsdbBolt implements IRichBolt {
         this.collector = collector;
         this.tsdb = OpenTsdbClientFactory.getTsdbClient(conf, this.cluster, this.name);
         this.mapper.prepare(conf);
-        errback = new Errback();
     }
 
     @Override
@@ -160,7 +158,7 @@ public class OpenTsdbBolt implements IRichBolt {
                         fieldMapper.getTimestamp(tuple),
                         (long) value,
                         fieldMapper.getTags(tuple)
-                    ).addErrback(errback));
+                    ));
                 } catch (Exception ex) {
                     requests.add(Deferred.fromError(ex));
                 }
@@ -178,7 +176,7 @@ public class OpenTsdbBolt implements IRichBolt {
             }
         }
 
-        Deferred<ArrayList<Object>> results = Deferred.groupInOrder(requests);
+        Deferred<ArrayList<Object>> results = Deferred.group(requests);
 
         if (this.successCallback != null) {
             results = results.addCallback(this.successCallback);
@@ -218,28 +216,8 @@ public class OpenTsdbBolt implements IRichBolt {
                 log.error("AsyncHBase exception : " + ex.toString());
                 this.collector.fail(tuple);
             }
-            this.collector.ack(tuple);
         } else {
-            results.addCallbacks(new Callback<Object, ArrayList<Object>>() {
-                @Override
-                public Object call(ArrayList<Object> results) throws Exception {
-                    synchronized (collector) {
-                        collector.emit(results);
-                        collector.ack(tuple);
-                    }
-                    return null;
-                }
-            }, new Callback<Object, Exception>() {
-                @Override
-                public Object call(Exception ex) throws Exception {
-                    // ERROR
-                    log.error("AsyncHBase exception : " + ex.toString());
-                    synchronized (collector) {
-                        collector.fail(tuple);
-                    }
-                    return this;
-                }
-            });
+            results.addCallbacks(new SuccessCallback(tuple), new ErrorCallback(tuple));
         }
     }
 
@@ -260,18 +238,44 @@ public class OpenTsdbBolt implements IRichBolt {
     }
 
     /**
-     * <p>
-     * This error callback checks if there is a need to throttle
-     * </p>
+     * Called on success in async mode to asynchronously ack the tuple.
      */
-    final class Errback implements Callback<Object, Exception> {
+    class SuccessCallback implements Callback<Object, ArrayList<Object>> {
+        final Tuple tuple;
+
+        SuccessCallback(Tuple tuple) {
+            this.tuple = tuple;
+        }
+
         @Override
-        public Object call(final Exception ex) {
+        public Object call(ArrayList<Object> results) throws Exception {
+            synchronized (collector) {
+                collector.ack(tuple);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Called on failure in async mode to asynchronously fail the tuple.
+     */
+    class ErrorCallback implements Callback<Object, Exception> {
+        final Tuple tuple;
+
+        ErrorCallback(Tuple tuple) {
+            this.tuple = tuple;
+        }
+
+        @Override
+        public Object call(Exception ex) throws Exception {
+            log.error("AsyncHBase exception : " + ex.toString());
             if (ex instanceof PleaseThrottleException) {
                 throttle = true;
-                return null;
+                return ex;
             }
-            log.warn("hbase exception " + ex.toString());
+            synchronized (collector) {
+                collector.fail(tuple);
+            }
             return ex;
         }
     }

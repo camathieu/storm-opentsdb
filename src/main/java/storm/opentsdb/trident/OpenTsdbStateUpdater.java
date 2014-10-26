@@ -47,12 +47,12 @@ public class OpenTsdbStateUpdater extends BaseStateUpdater<OpenTsdbState> {
                 log.warn("OpenTSDB failure ", ex);
                 if (ex instanceof PleaseThrottleException) {
                     throttle = true;
-                    return null;
+                    return ex;
                 }
                 synchronized (collector) {
                     collector.reportError(ex);
                 }
-                return null;
+                return ex;
             }
         };
 
