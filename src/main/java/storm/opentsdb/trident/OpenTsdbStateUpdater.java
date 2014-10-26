@@ -6,6 +6,7 @@ package storm.opentsdb.trident;
 
 import com.stumbleupon.async.Callback;
 import com.stumbleupon.async.Deferred;
+import org.hbase.async.PleaseThrottleException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import storm.trident.operation.TridentCollector;
@@ -22,34 +23,73 @@ import java.util.List;
 public class OpenTsdbStateUpdater extends BaseStateUpdater<OpenTsdbState> {
     public static final Logger log = LoggerFactory.getLogger(storm.opentsdb.trident.OpenTsdbStateUpdater.class);
 
+    private boolean throttle = true;
+    private boolean async = true;
+
+    /**
+     * @param async Whether or not to wait for
+     * @return this so you can do method chaining
+     */
+    public OpenTsdbStateUpdater setAsync(boolean async) {
+        this.async = async;
+        return this;
+    }
+
     @Override
     public void updateState(OpenTsdbState state, List<TridentTuple> tuples,
                             final TridentCollector collector) {
-
         log.info("OpenTsdbStateUpdater : " + "Saving " + tuples.size() + " tuples to OpenTSDB");
         long start_time = System.currentTimeMillis();
 
-        List<Deferred<ArrayList<Object>>> results = new ArrayList<>();
-        for (final TridentTuple tuple : tuples) {
-            results.add(state.put(tuple).addErrback(new Callback<Object, Exception>() {
-                @Override
-                public Object call(Exception ex) throws Exception {
-                    // ERROR
-                    log.warn("OpenTSDB failure ", ex);
-                    synchronized (collector) {
-                        collector.reportError(ex);
-                    }
+        Callback<Object, Exception> errback = new Callback<Object, Exception>() {
+            @Override
+            public Object call(Exception ex) throws Exception {
+                log.warn("OpenTSDB failure ", ex);
+                if (ex instanceof PleaseThrottleException) {
+                    throttle = true;
                     return null;
                 }
-            }));
+                synchronized (collector) {
+                    collector.reportError(ex);
+                }
+                return null;
+            }
+        };
+
+        List<Deferred<ArrayList<Object>>> results = new ArrayList<>();
+        for (final TridentTuple tuple : tuples) {
+            results.add(state.put(tuple).addErrback(errback));
         }
 
-        try {
-            Deferred.group(results).join();
-        } catch (InterruptedException ex) {
-            log.warn("OpenTSDB results join exception ", ex);
-        } catch (Exception ex) {
-            log.warn("OpenTSDB exception ", ex);
+        if (throttle) {
+            log.warn("Throttling...");
+            long throttle_time = System.nanoTime();
+            try {
+                Deferred.group(results).join();
+            } catch (Exception ex) {
+                log.error("AsyncHBase exception : " + ex.toString());
+                collector.reportError(ex);
+            } finally {
+                throttle_time = System.nanoTime() - throttle_time;
+                if (throttle_time < 1000000000L) {
+                    log.info("Got throttled for only " + throttle_time + "ns, sleeping a bit now");
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ex) {
+                        log.error("AsyncHBase exception : " + ex.toString());
+                    }
+                }
+                log.info("Done throttling...");
+                this.throttle = false;
+            }
+        } else if (!async) {
+            try {
+                Deferred.group(results).join();
+            } catch (InterruptedException ex) {
+                log.warn("OpenTSDB results join exception ", ex);
+            } catch (Exception ex) {
+                log.warn("OpenTSDB exception ", ex);
+            }
         }
 
         long elapsed = System.currentTimeMillis() - start_time;
