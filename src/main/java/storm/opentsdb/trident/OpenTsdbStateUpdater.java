@@ -23,7 +23,7 @@ import java.util.List;
 public class OpenTsdbStateUpdater extends BaseStateUpdater<OpenTsdbState> {
     public static final Logger log = LoggerFactory.getLogger(storm.opentsdb.trident.OpenTsdbStateUpdater.class);
 
-    private boolean throttle = true;
+    private boolean throttle = false;
     private boolean async = true;
 
     /**
