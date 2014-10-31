@@ -17,6 +17,8 @@ import storm.asynchbase.example.trident.operation.StreamRateAggregator;
 import storm.opentsdb.example.trident.operation.OpenTsdbTupleAdaptatorFunction;
 import storm.opentsdb.trident.OpenTsdbStateFactory;
 import storm.opentsdb.trident.OpenTsdbStateUpdater;
+import storm.opentsdb.trident.mapper.OpenTsdbTridentMapper;
+import storm.opentsdb.trident.mapper.OpenTsdbTridentTupleFieldMapper;
 import storm.trident.Stream;
 import storm.trident.TridentState;
 import storm.trident.TridentTopology;
@@ -47,7 +49,7 @@ public class OpenTsdbTridentExampleTopology {
             ).partitionPersist(
                 new OpenTsdbStateFactory("hbase-cluster", "test-tsdb"),
                 new Fields("rate"),
-                new OpenTsdbStateUpdater()
+                new OpenTsdbStateUpdater(new OpenTsdbTridentMapper().addFieldMapper(new OpenTsdbTridentTupleFieldMapper()))
             ).parallelismHint(5);
 
         return topology.build();

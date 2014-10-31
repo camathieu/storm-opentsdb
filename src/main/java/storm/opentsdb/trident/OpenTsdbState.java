@@ -34,52 +34,16 @@ public class OpenTsdbState implements State {
     public static final Logger log = LoggerFactory.getLogger(OpenTsdbState.class);
 
     private final TSDB tsdb;
-    private final IOpenTsdbTridentMapper mapper;
 
     /**
      * @param tsdb   Initialized OpenTSDB client ( used by the factory ).
-     * @param mapper A mapper containing mapping from tuple to puts.
      */
-    public OpenTsdbState(TSDB tsdb, IOpenTsdbTridentMapper mapper) {
+    public OpenTsdbState(TSDB tsdb) {
         this.tsdb = tsdb;
-        this.mapper = mapper;
     }
 
-    /**
-     * @param tuple Trident tuple to process.
-     * @return A deferred list of void results.
-     */
-    public Deferred<ArrayList<Object>> put(final TridentTuple tuple) {
-        ArrayList<Deferred<Object>> results = new ArrayList<>();
-
-        for (IOpenTsdbTridentFieldMapper fieldMapper : mapper.getFieldMappers()) {
-            double value = fieldMapper.getValue(tuple);
-            if (value == (long) value) {
-                try {
-                    results.add(tsdb.addPoint(
-                        fieldMapper.getMetric(tuple),
-                        fieldMapper.getTimestamp(tuple),
-                        (long) value,
-                        fieldMapper.getTags(tuple)
-                    ));
-                } catch (Exception ex) {
-                    results.add(Deferred.fromError(ex));
-                }
-            } else {
-                try {
-                    results.add(tsdb.addPoint(
-                        fieldMapper.getMetric(tuple),
-                        fieldMapper.getTimestamp(tuple),
-                        (long) value,
-                        fieldMapper.getTags(tuple)
-                    ));
-                } catch (Exception ex) {
-                    results.add(Deferred.fromError(ex));
-                }
-            }
-        }
-
-        return Deferred.group(results);
+    public TSDB getOpenTsdbClient() {
+        return this.tsdb;
     }
 
     @Override

@@ -20,26 +20,14 @@ import java.util.Map;
 public class OpenTsdbStateFactory implements StateFactory {
     private final String cluster;
     private final String name;
-    private final IOpenTsdbTridentMapper mapper;
-
-    /**
-     * @param cluster The HBase cluster to use.
-     * @param name    The OpenTSDB instance to use.
-     * @param mapper  A mapper to map trident tuple to OpenTSDB put request.
-     */
-    public OpenTsdbStateFactory(String cluster, String name, IOpenTsdbTridentMapper mapper) {
-        this.cluster = cluster;
-        this.name = name;
-        this.mapper = mapper;
-    }
 
     /**
      * @param cluster The HBase cluster to use.
      * @param name    The OpenTSDB instance to use.
      */
     public OpenTsdbStateFactory(String cluster, String name) {
-        this(cluster, name, new OpenTsdbTridentMapper()
-            .addFieldMapper(new OpenTsdbTridentTupleFieldMapper()));
+        this.cluster = cluster;
+        this.name = name;
     }
 
     /**
@@ -56,6 +44,6 @@ public class OpenTsdbStateFactory implements StateFactory {
     @Override
     public State makeState(Map conf, IMetricsContext metrics, int partitionIndex, int numPartitions) {
         return new OpenTsdbState(OpenTsdbClientFactory
-            .getTsdbClient(conf, this.cluster, this.name), this.mapper);
+            .getTsdbClient(conf, this.cluster, this.name));
     }
 }
