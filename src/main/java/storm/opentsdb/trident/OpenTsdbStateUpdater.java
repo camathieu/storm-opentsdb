@@ -82,7 +82,7 @@ public class OpenTsdbStateUpdater extends BaseStateUpdater<OpenTsdbState> {
                             fieldMapper.getTags(tuple)
                         ).addErrback(errback));
                     } catch (Exception ex) {
-                        results.add(Deferred.fromError(ex));
+                        results.add(Deferred.fromError(ex).addErrback(errback));
                     }
                 } else {
                     try {
@@ -93,7 +93,7 @@ public class OpenTsdbStateUpdater extends BaseStateUpdater<OpenTsdbState> {
                             fieldMapper.getTags(tuple)
                         ).addErrback(errback));
                     } catch (Exception ex) {
-                        results.add(Deferred.fromError(ex));
+                        results.add(Deferred.fromError(ex).addErrback(errback));
                     }
                 }
             }
