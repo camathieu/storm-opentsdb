@@ -41,6 +41,12 @@ public interface IOpenTsdbTridentFieldMapper extends Serializable {
     public Map<String, String> getTags(TridentTuple tuple);
 
     /**
+     * @param tuple The storm tuple to process.
+     * @return Check if the tuple has to be skipped.
+     */
+    public boolean isFiltered(TridentTuple tuple);
+
+    /**
      * <p>
      * Initialize the mapper.
      * </p>

@@ -72,28 +72,30 @@ public class OpenTsdbStateUpdater extends BaseStateUpdater<OpenTsdbState> {
         List<Deferred<Object>> results = new ArrayList<>();
         for (final TridentTuple tuple : tuples) {
             for (IOpenTsdbTridentFieldMapper fieldMapper : mapper.getFieldMappers()) {
-                double value = fieldMapper.getValue(tuple);
-                if (value == (long) value) {
-                    try {
-                        results.add(tsdb.addPoint(
-                            fieldMapper.getMetric(tuple),
-                            fieldMapper.getTimestamp(tuple),
-                            (long) value,
-                            fieldMapper.getTags(tuple)
-                        ).addErrback(errback));
-                    } catch (Exception ex) {
-                        results.add(Deferred.fromError(ex).addErrback(errback));
-                    }
-                } else {
-                    try {
-                        results.add(tsdb.addPoint(
-                            fieldMapper.getMetric(tuple),
-                            fieldMapper.getTimestamp(tuple),
-                            (long) value,
-                            fieldMapper.getTags(tuple)
-                        ).addErrback(errback));
-                    } catch (Exception ex) {
-                        results.add(Deferred.fromError(ex).addErrback(errback));
+                if ( ! fieldMapper.isFiltered(tuple) ) {
+                    double value = fieldMapper.getValue(tuple);
+                    if (value == (long) value) {
+                        try {
+                            results.add(tsdb.addPoint(
+                                fieldMapper.getMetric(tuple),
+                                fieldMapper.getTimestamp(tuple),
+                                (long) value,
+                                fieldMapper.getTags(tuple)
+                            ).addErrback(errback));
+                        } catch (Exception ex) {
+                            results.add(Deferred.fromError(ex).addErrback(errback));
+                        }
+                    } else {
+                        try {
+                            results.add(tsdb.addPoint(
+                                fieldMapper.getMetric(tuple),
+                                fieldMapper.getTimestamp(tuple),
+                                (long) value,
+                                fieldMapper.getTags(tuple)
+                            ).addErrback(errback));
+                        } catch (Exception ex) {
+                            results.add(Deferred.fromError(ex).addErrback(errback));
+                        }
                     }
                 }
             }

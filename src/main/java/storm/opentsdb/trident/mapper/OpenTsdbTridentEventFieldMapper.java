@@ -7,6 +7,7 @@ package storm.opentsdb.trident.mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import storm.opentsdb.model.IOpenTsdbEvent;
+import storm.opentsdb.utils.OpenTsdbTupleFilter;
 import storm.trident.tuple.TridentTuple;
 
 import java.util.Iterator;
@@ -32,6 +33,7 @@ public class OpenTsdbTridentEventFieldMapper implements IOpenTsdbTridentFieldMap
 
     private String eventField;
     private List<String> validTags;
+    private OpenTsdbTupleFilter filter;
 
     /**
      * @param eventField The tuple field containing the event
@@ -47,6 +49,25 @@ public class OpenTsdbTridentEventFieldMapper implements IOpenTsdbTridentFieldMap
     public OpenTsdbTridentEventFieldMapper setValidTags(List<String> validTags) {
         this.validTags = validTags;
         return this;
+    }
+
+    /**
+     * @param filter execute the filter on each tuple
+     * @return This so you can do method chaining.
+     */
+    public OpenTsdbTridentEventFieldMapper setFilter(OpenTsdbTupleFilter filter) {
+        this.filter = filter;
+        return this;
+    }
+
+    /**
+     * @return Check if the tuple have to trigger a put.
+     */
+    public boolean isFiltered(TridentTuple tuple) {
+        if ( this.filter != null) {
+            return this.filter.filter(tuple);
+        }
+        return false;
     }
 
     /**

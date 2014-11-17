@@ -6,6 +6,7 @@ package storm.opentsdb.trident.mapper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import storm.opentsdb.utils.OpenTsdbTupleFilter;
 import storm.opentsdb.utils.serializer.OpenTsdbMetricSerializer;
 import storm.opentsdb.utils.serializer.OpenTsdbTagsSerializer;
 import storm.opentsdb.utils.serializer.OpenTsdbTimestampSerializer;
@@ -48,6 +49,7 @@ public class OpenTsdbTridentTupleFieldMapper implements IOpenTsdbTridentFieldMap
     private OpenTsdbTagsSerializer tagsSerializer;
 
     private List<String> validTags;
+    private OpenTsdbTupleFilter filter;
 
     /**
      * @param metricField    Metric field name.
@@ -79,6 +81,25 @@ public class OpenTsdbTridentTupleFieldMapper implements IOpenTsdbTridentFieldMap
     public OpenTsdbTridentTupleFieldMapper setValidTags(List<String> validTags) {
         this.validTags = validTags;
         return this;
+    }
+
+    /**
+     * @param filter execute the filter on each tuple
+     * @return This so you can do method chaining.
+     */
+    public OpenTsdbTridentTupleFieldMapper setFilter(OpenTsdbTupleFilter filter) {
+        this.filter = filter;
+        return this;
+    }
+
+    /**
+     * @return Check if the tuple have to trigger a put.
+     */
+    public boolean isFiltered(TridentTuple tuple) {
+        if ( this.filter != null) {
+            return this.filter.filter(tuple);
+        }
+        return false;
     }
 
     /**
